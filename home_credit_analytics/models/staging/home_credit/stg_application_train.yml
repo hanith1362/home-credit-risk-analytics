@@ -1,0 +1,41 @@
+
+version: 2
+
+models:
+  - name: stg_application_train
+
+    description: >
+      Cleaned staging model containing Home Credit
+      customer loan application information.
+      This model standardizes raw column names and
+      calculates customer age in years.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Unique identifier for each customer application.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: DEFAULT_FLAG
+        description: Indicates whether the customer experienced payment difficulties.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: ANNUAL_INCOME
+        description: Total annual income of the customer.
+
+      - name: CREDIT_AMOUNT
+        description: Amount of credit requested.
+
+      - name: ANNUITY_AMOUNT
+        description: Loan annuity amount.
+
+      - name: GOODS_PRICE
+        description: Price of the goods financed.
+
+      - name: AGE_YEARS
+        description: Customer age calculated from DAYS_BIRTH.

@@ -1,0 +1,33 @@
+
+version: 2
+
+models:
+  - name: stg_credit_card_balance
+    description: >
+      Staging model containing monthly credit card balance,
+      payment, drawing, and delinquency information.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Customer identifier.
+        data_tests:
+          - not_null
+
+      - name: PREVIOUS_APPLICATION_ID
+        description: Previous loan application identifier.
+        data_tests:
+          - not_null
+
+      - name: MONTH_OFFSET
+        description: Relative month of the credit card record.
+        data_tests:
+          - not_null
+
+      - name: CONTRACT_STATUS
+        description: Credit card contract status.
+
+      - name: INSERTED_AT
+        description: Timestamp when the record entered RAW.
+
+      - name: UPDATED_AT
+        description: Timestamp when the RAW record was last updated.

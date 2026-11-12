@@ -1,0 +1,39 @@
+
+version: 2
+
+models:
+  - name: stg_installments_payments
+
+    description: >
+      Standardized installment payment records containing
+      scheduled and actual payment information for previous
+      customer loan applications.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Customer identifier.
+        data_tests:
+          - not_null
+
+      - name: PREVIOUS_APPLICATION_ID
+        description: Previous loan application identifier.
+        data_tests:
+          - not_null
+
+      - name: INSTALLMENT_VERSION
+        description: Version of the installment schedule.
+
+      - name: INSTALLMENT_NUMBER
+        description: Sequential installment number.
+
+      - name: SCHEDULED_PAYMENT_DAY
+        description: Relative day on which payment was scheduled.
+
+      - name: ACTUAL_PAYMENT_DAY
+        description: Relative day on which payment was received.
+
+      - name: SCHEDULED_PAYMENT_AMOUNT
+        description: Amount the customer was expected to pay.
+
+      - name: ACTUAL_PAYMENT_AMOUNT
+        description: Amount the customer actually paid.

@@ -1,0 +1,28 @@
+
+version: 2
+
+models:
+  - name: stg_bureau_balance
+
+    description: >
+      Standardized monthly credit status history
+      for external bureau credit records.
+
+    columns:
+      - name: BUREAU_CREDIT_ID
+        description: Identifier of the external bureau credit record.
+        data_tests:
+          - not_null
+
+      - name: MONTH_OFFSET
+        description: Month offset relative to the application reference date.
+        data_tests:
+          - not_null
+
+      - name: MONTHLY_CREDIT_STATUS
+        description: Monthly repayment status reported by the credit bureau.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['0', '1', '2', '3', '4', '5', 'C', 'X']

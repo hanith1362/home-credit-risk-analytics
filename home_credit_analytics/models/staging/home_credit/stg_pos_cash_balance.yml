@@ -1,0 +1,40 @@
+
+version: 2
+
+models:
+  - name: stg_pos_cash_balance
+
+    description: >
+      Standardized monthly point-of-sale and cash loan
+      history for previous customer applications.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Customer identifier.
+        data_tests:
+          - not_null
+
+      - name: PREVIOUS_APPLICATION_ID
+        description: Identifier of the previous loan application.
+        data_tests:
+          - not_null
+
+      - name: MONTH_OFFSET
+        description: Relative month offset from the application reference date.
+        data_tests:
+          - not_null
+
+      - name: TOTAL_INSTALLMENTS
+        description: Total scheduled installments.
+
+      - name: REMAINING_INSTALLMENTS
+        description: Number of installments remaining.
+
+      - name: CONTRACT_STATUS
+        description: Monthly status of the previous loan.
+
+      - name: DAYS_PAST_DUE
+        description: Days past due.
+
+      - name: DAYS_PAST_DUE_TOLERANCE
+        description: Days past due under the dataset's tolerance rules.

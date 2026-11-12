@@ -1,0 +1,66 @@
+
+version: 2
+
+models:
+  - name: stg_bureau
+
+    description: >
+      Standardized staging model containing customers'
+      external credit bureau records. Preserves the
+      original bureau credit record grain.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Identifier of the customer associated with the credit record.
+        data_tests:
+          - not_null
+
+      - name: BUREAU_CREDIT_ID
+        description: Unique identifier assigned to an external bureau credit record.
+        data_tests:
+          - not_null
+
+      - name: CREDIT_STATUS
+        description: Current status of the external credit record.
+
+      - name: CREDIT_CURRENCY
+        description: Currency in which the credit record is denominated.
+
+      - name: DAYS_SINCE_CREDIT
+        description: Days between the credit reporting date and the application reference date.
+
+      - name: DAYS_OVERDUE
+        description: Number of days the credit record was overdue.
+
+      - name: DAYS_TO_EXPECTED_END
+        description: Days until the expected credit end date.
+
+      - name: DAYS_TO_ACTUAL_END
+        description: Days until the actual credit closure date.
+
+      - name: MAX_OVERDUE_AMOUNT
+        description: Maximum overdue credit amount.
+
+      - name: CREDIT_PROLONGATION_COUNT
+        description: Number of times the credit was prolonged.
+
+      - name: TOTAL_CREDIT_AMOUNT
+        description: Total amount of credit.
+
+      - name: OUTSTANDING_DEBT
+        description: Outstanding debt associated with the credit record.
+
+      - name: CREDIT_LIMIT_AMOUNT
+        description: Credit limit amount.
+
+      - name: OVERDUE_AMOUNT
+        description: Outstanding overdue amount.
+
+      - name: CREDIT_TYPE
+        description: Classification of the external credit.
+
+      - name: DAYS_SINCE_CREDIT_UPDATE
+        description: Days since the external credit record was last updated.
+
+      - name: ANNUITY_AMOUNT
+        description: Annuity amount associated with the credit record.

@@ -1,0 +1,16 @@
+
+version: 2
+
+sources:
+  - name: home_credit_raw
+    database: FINANCE_DB
+    schema: RAW
+
+    tables:
+      - name: APPLICATION_TRAIN
+      - name: BUREAU
+      - name: BUREAU_BALANCE
+      - name: PREVIOUS_APPLICATION
+      - name: POS_CASH_BALANCE
+      - name: INSTALLMENTS_PAYMENTS
+      - name: CREDIT_CARD_BALANCE

@@ -1,0 +1,63 @@
+
+version: 2
+
+models:
+  - name: stg_previous_application
+
+    description: >
+      Standardized staging model containing customers'
+      historical loan applications with Home Credit.
+      Preserves one record per previous application.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Identifier of the customer associated with the previous application.
+        data_tests:
+          - not_null
+
+      - name: PREVIOUS_APPLICATION_ID
+        description: Unique identifier for an individual previous loan application.
+        data_tests:
+          - not_null
+
+      - name: CONTRACT_TYPE
+        description: Type of financial product requested.
+
+      - name: ANNUITY_AMOUNT
+        description: Annuity amount associated with the previous application.
+
+      - name: APPLICATION_AMOUNT
+        description: Amount requested by the customer.
+
+      - name: CREDIT_AMOUNT
+        description: Credit amount offered for the previous application.
+
+      - name: DOWN_PAYMENT_AMOUNT
+        description: Down payment associated with the application.
+
+      - name: CONTRACT_STATUS
+        description: Outcome or status of the previous application.
+
+      - name: DAYS_SINCE_DECISION
+        description: Days between the previous application decision and the current application reference date.
+
+      - name: PAYMENT_TYPE
+        description: Payment method associated with the application.
+
+      - name: REJECTION_REASON
+        description: Reason code for application rejection, where applicable.
+
+      - name: CLIENT_TYPE
+        description: Classification of the customer.
+
+      - name: GOODS_CATEGORY
+        description: Category of goods associated with the application.
+
+      - name: APPLICATION_CHANNEL
+        description: Channel through which the application was submitted.
+
+      - name: SELLER_INDUSTRY
+        description: Industry classification of the seller.
+
+      - name: PAYMENT_COUNT
+        description: Number of installments associated with the application.
