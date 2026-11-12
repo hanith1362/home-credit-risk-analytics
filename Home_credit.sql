@@ -1,0 +1,370 @@
+
+CREATE OR REPLACE STORAGE INTEGRATION HOME_CREDIT_S3_INT
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::744114104108:role/HomeCreditSnowflakeRole'
+  STORAGE_ALLOWED_LOCATIONS = (
+    's3://project-finance-data-lake/landing/home_credit/'
+  );
+
+  desc integration HOME_CREDIT_S3_INT;
+
+SELECT SYSTEM$VALIDATE_STORAGE_INTEGRATION(
+    'HOME_CREDIT_S3_INT',
+    's3://project-finance-data-lake/landing/home_credit/',
+    'validation_test.txt',
+    'list'
+);
+
+create or replace database FINANCE_DB;
+
+create or replace schema RAW;
+
+CREATE OR REPLACE FILE FORMAT FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT
+    TYPE = CSV
+    PARSE_HEADER = TRUE
+    FIELD_DELIMITER = ','
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+    NULL_IF = ('NULL', 'null')
+    EMPTY_FIELD_AS_NULL = TRUE
+    TRIM_SPACE = TRUE
+    ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE;
+
+show file formats;
+
+CREATE OR REPLACE STAGE FINANCE_DB.RAW.HOME_CREDIT_STAGE
+    URL='s3://project-finance-data-lake/landing/home_credit/'
+    STORAGE_INTEGRATION=HOME_CREDIT_S3_INT
+    FILE_FORMAT=FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT;
+
+LIST @FINANCE_DB.RAW.HOME_CREDIT_STAGE;
+
+select * from table(
+infer_schema(
+Location=>'@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+File_format=>'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+files=>('application_train.csv')
+)
+)
+
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.APPLICATION_TRAIN
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('application_train.csv')
+        )
+    )
+);
+
+-- 1. Bureau
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.BUREAU
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('bureau.csv')
+        )
+    )
+);
+
+-- 2. Bureau Balance
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.BUREAU_BALANCE
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('bureau_balance.csv')
+        )
+    )
+);
+
+-- 3. Previous Application
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.PREVIOUS_APPLICATION
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('previous_application.csv')
+        )
+    )
+);
+
+-- 4. POS Cash Balance
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.POS_CASH_BALANCE
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('POS_CASH_balance.csv')
+        )
+    )
+);
+
+-- 5. Installments Payments
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.INSTALLMENTS_PAYMENTS
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('installments_payments.csv')
+        )
+    )
+);
+
+-- 6. Credit Card Balance
+CREATE OR REPLACE TABLE FINANCE_DB.RAW.CREDIT_CARD_BALANCE
+USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))
+    WITHIN GROUP (ORDER BY ORDER_ID)
+    FROM TABLE(
+        INFER_SCHEMA(
+            LOCATION => '@FINANCE_DB.RAW.HOME_CREDIT_STAGE',
+            FILE_FORMAT => 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT',
+            FILES => ('credit_card_balance.csv')
+        )
+    )
+);
+
+SHOW TABLES IN SCHEMA FINANCE_DB.RAW;
+
+
+--Loading all files data into the created tables
+
+-- 1. Application Train
+COPY INTO FINANCE_DB.RAW.APPLICATION_TRAIN
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('application_train.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+-- 2. Bureau
+COPY INTO FINANCE_DB.RAW.BUREAU
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('bureau.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+-- 3. Bureau Balance
+COPY INTO FINANCE_DB.RAW.BUREAU_BALANCE
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('bureau_balance.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+-- 4. Previous Application
+COPY INTO FINANCE_DB.RAW.PREVIOUS_APPLICATION
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('previous_application.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+-- 5. POS Cash Balance
+COPY INTO FINANCE_DB.RAW.POS_CASH_BALANCE
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('POS_CASH_balance.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+-- 6. Installments Payments
+COPY INTO FINANCE_DB.RAW.INSTALLMENTS_PAYMENTS
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('installments_payments.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+-- 7. Credit Card Balance
+COPY INTO FINANCE_DB.RAW.CREDIT_CARD_BALANCE
+FROM @FINANCE_DB.RAW.HOME_CREDIT_STAGE
+FILES = ('credit_card_balance.csv')
+FILE_FORMAT = (FORMAT_NAME = 'FINANCE_DB.RAW.HOME_CREDIT_CSV_FORMAT')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+ON_ERROR = ABORT_STATEMENT;
+
+
+--Checking the count of the loaded rows
+SELECT 'APPLICATION_TRAIN' AS TABLE_NAME, COUNT(*) AS ROW_COUNT
+FROM FINANCE_DB.RAW.APPLICATION_TRAIN
+
+UNION ALL
+
+SELECT 'BUREAU', COUNT(*)
+FROM FINANCE_DB.RAW.BUREAU
+
+UNION ALL
+
+SELECT 'BUREAU_BALANCE', COUNT(*)
+FROM FINANCE_DB.RAW.BUREAU_BALANCE
+
+UNION ALL
+
+SELECT 'PREVIOUS_APPLICATION', COUNT(*)
+FROM FINANCE_DB.RAW.PREVIOUS_APPLICATION
+
+UNION ALL
+
+SELECT 'POS_CASH_BALANCE', COUNT(*)
+FROM FINANCE_DB.RAW.POS_CASH_BALANCE
+
+UNION ALL
+
+SELECT 'INSTALLMENTS_PAYMENTS', COUNT(*)
+FROM FINANCE_DB.RAW.INSTALLMENTS_PAYMENTS
+
+UNION ALL
+
+SELECT 'CREDIT_CARD_BALANCE', COUNT(*)
+FROM FINANCE_DB.RAW.CREDIT_CARD_BALANCE;
+
+
+SHOW SCHEMAS IN DATABASE FINANCE_DB;
+
+SELECT
+    COUNT(*) AS TOTAL_RECORDS,
+    COUNT(DISTINCT SK_ID_CURR) AS UNIQUE_CUSTOMERS,
+    COUNT_IF(SK_ID_CURR IS NULL) AS NULL_CUSTOMER_IDS,
+    COUNT_IF(TARGET = 1) AS DEFAULTED_LOANS,
+    COUNT_IF(TARGET = 0) AS NON_DEFAULTED_LOANS
+FROM FINANCE_DB.RAW.APPLICATION_TRAIN;
+
+select * from table(information_schema.query_history());
+
+SELECT
+    COUNT(*) AS TOTAL_ROWS,
+
+    COUNT_IF(TARGET IS NULL) AS NULL_TARGET,
+
+    COUNT_IF(TARGET NOT IN (0, 1)) AS INVALID_TARGET,
+
+    COUNT_IF(AMT_INCOME_TOTAL <= 0) AS INVALID_INCOME,
+
+    COUNT_IF(AMT_CREDIT <= 0) AS INVALID_CREDIT,
+
+    COUNT_IF(AMT_ANNUITY <= 0) AS INVALID_ANNUITY,
+
+    COUNT_IF(AMT_GOODS_PRICE <= 0) AS INVALID_GOODS_PRICE,
+
+    COUNT_IF(DAYS_BIRTH >= 0) AS INVALID_BIRTH_DAYS
+
+FROM FINANCE_DB.RAW.APPLICATION_TRAIN
+
+
+create schema Finance_db.DBT_DEV
+
+
+
+SELECT
+*
+FROM FINANCE_DB.RAW.APPLICATION_TRAIN
+LIMIT 10;
+
+
+SELECT
+    COUNT(*) AS TOTAL_ROWS,
+    COUNT(DISTINCT SK_ID_CURR) AS UNIQUE_CUSTOMERS,
+    COUNT_IF(TARGET = 1) AS DEFAULTED,
+    COUNT_IF(TARGET = 0) AS NON_DEFAULTED,
+    COUNT_IF(AMT_INCOME_TOTAL IS NULL) AS MISSING_INCOME,
+    COUNT_IF(AMT_CREDIT IS NULL) AS MISSING_CREDIT
+FROM FINANCE_DB.RAW.APPLICATION_TRAIN;
+
+
+SELECT *
+FROM FINANCE_DB.DBT_DEV_STAGING.STG_APPLICATION_TRAIN
+LIMIT 10;
+
+show tables
+
+select * from Bureau
+
+with abc as(
+select sk_id_curr, dense_rank() over(partition by sk_id_curr order by sk_id_curr) as rank1 from BUREAU
+)
+select * from abc where rank1>1
+
+SELECT *
+FROM FINANCE_DB.RAW.BUREAU
+LIMIT 10;
+
+select * from stg_bureau
+
+select * from FINANCE_DB.DBT_DEV_STAGING.stg_bureau_balance;
+
+show tables;
+
+select * from previous_application;
+
+select * from FINANCE_DB.DBT_DEV_STAGING.stg_previous_application;
+
+select * from finance_db.raw.pos_cash_balance;
+
+
+select * from application_train;
+
+show tables;
+
+select * from stg_bureau
+
+select * from stg_previous_application;
+
+select * from INT_BUREAU_CUSTOMER_SUMMARY;
+select * from INT_PREVIOUS_APPLICATION_SUMMARY;
+select * from int_pos_cash_summary;
+select * from int_
+select * from  finance_db.dbt_dev_staging.stg_credit_card_balance limit 10;
+select * from int_credit_card_summary;
+
+select * from int_installment_payment_summary;
+
+
+select * from finance_db.dbt_dev_staging.stg_application_train;
+select * from finance_db.dbt_dev_intermediate.int_bureau_customer_summary;
+select * from finance_db.dbt_dev_intermediate.int_pos_cash_summary;
+select * from finance_db.dbt_dev_intermediate.int_credit_card_summary;
+
+select * from finance_db.dbt_dev_intermediate.int_customer_credit_profile;
+
+
+UPDATE FINANCE_DB.RAW.APPLICATION_TRAIN
+SET AMT_INCOME_TOTAL = 950000
+WHERE SK_ID_CURR = 140508;
+
+select * from FINANCE_DB.RAW.APPLICATION_TRAIN;
+
+
+select * from finance_db.dbt_dev_staging.stg_application_train where CUSTOMER_ID=140508;
+
+select * from finance_db.snapshots.snap_customer_application;
+
+select * from finance_db.snapshots.snap_customer_application where customer_id=140508;
+
+select * from finance_db.dbt_dev_marts.mart_customer_credit_risk;
+
+select * from finance_db.dbt_dev_intermediate.int_customer_credit_profile
+
+select * from finance_db.dbt_dev_marts.MART_LOAN_PORTFOLIO
